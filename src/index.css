@@ -1,0 +1,63 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background: linear-gradient(180deg, #ffffff 0%, #ced2d6 124.35%);
+}
+
+::-webkit-scrollbar-track {
+  border-radius: 10px;
+  background-color: #f5f5f5;
+  margin: 10px 10px;
+}
+
+/* Style the scrollbar (applies to both vertical and horizontal) */
+::-webkit-scrollbar {
+  width: 6px; /* Width for vertical scrollbar */
+  height: 4px; /* Height for horizontal scrollbar */
+  background-color: transparent;
+}
+
+/* Style the scrollbar thumb */
+::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+
+  background-color: #555;
+}
+
+.active {
+  color: #71839a;
+  border-bottom: 2px solid #71839a;
+}
+
+.form-group {
+  @apply relative;
+}
+
+.form-input {
+  @apply w-full py-2 border-b border-gray-300 focus:outline-none focus:border-primary bg-transparent transition-colors;
+}
+
+.form-label {
+  @apply absolute left-0 top-2 text-gray-500 transition-all duration-200 pointer-events-none;
+}
+
+.form-input:focus + .form-label,
+.form-input:not(:placeholder-shown) + .form-label {
+  @apply -top-3 text-sm text-darkBlue  font-semibold;
+}
+
+.form-input:focus {
+  @apply border-primary;
+}
+
+.form-input::placeholder {
+  @apply text-transparent;
+}
+
+/* OTP input specific styles */
+.otp-input {
+  @apply w-16 h-16 text-center text-2xl border-b border-gray-300 focus:outline-none focus:border-primary bg-transparent;
+}
