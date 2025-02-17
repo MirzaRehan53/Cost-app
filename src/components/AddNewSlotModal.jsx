@@ -6,19 +6,14 @@ import { useDispatch } from "react-redux";
 import { addDirectCost } from "../store/slices/costCalculatorSlice";
 
 const NewSlotModal = ({ setShowSlotModal }) => {
-  const categories = [
-    "Raw Materials",
-    "Packaging",
-    "Labor",
-    "Overhead",
-    "Other",
-  ];
+  const categories = ["Raw Materials", "Packaging", "Labor", "Other"];
 
   const dcTypes = ["Variable", "Fixed"];
 
   const unitMeasures = [
     "Pieces",
     "Kilograms",
+    "Grams",
     "Liters",
     "Hours",
     "Meters",
@@ -108,7 +103,7 @@ const NewSlotModal = ({ setShowSlotModal }) => {
 
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="grid grid-cols-3 gap-4"
+          className="grid grid-cols-3 gap-6"
         >
           <div>
             <label className="block font-medium mb-1 text-sm">

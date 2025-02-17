@@ -11,7 +11,7 @@ const Input = ({
   return (
     <>
       <input
-        className={`${className} min-w-full border-skyBlue border bg-transparent px-3 rounded-[5px] h-[40px] placeholder:text-darkBlue placeholder:text-[14px] font-medium`}
+        className={`${className} min-w-full border-skyBlue border bg-transparent px-3 rounded-[5px] h-[30px] placeholder:text-darkBlue placeholder:text-[14px] font-medium`}
         value={value}
         onChange={onChange}
         placeholder={placeholder}

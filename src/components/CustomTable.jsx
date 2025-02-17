@@ -6,15 +6,31 @@ import {
   Edit2,
   Trash2,
   X,
-  CheckSquare,
   Check,
 } from "lucide-react";
 import {
   calculateCostPerInputQuantity,
+  calculateCostPerUnit,
+  calculateOverheadAllocated,
   calculateSubtotalCost,
+  calculateTotalCostPerProduct,
+  calculateTotalDirectCosts,
+  calculateTotalLaborHours,
 } from "../utils/formulas";
 
-// Utils functions for calculations
+const CATEGORIES = ["Raw Materials", "Packaging", "Labor", "Other"];
+
+const DC_TYPES = ["Variable", "Fixed"];
+
+const UNIT_MEASURES = [
+  "Pieces",
+  "Kilograms",
+  "Grams",
+  "Liters",
+  "Hours",
+  "Meters",
+  "Units",
+];
 
 const CustomTooltip = ({
   children,
@@ -31,16 +47,10 @@ const CustomTooltip = ({
       {children}
       <div className="absolute z-50 left-0 top-full bg-white border rounded-lg shadow-lg py-1 px-2">
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 px-2 py-1 border-r">
-            <CheckSquare className="w-4 h-4 text-blue-600" />
-            <span className="text-sm">{selectedCount} selected</span>
-          </div>
           <button className="p-1 hover:bg-gray-100 rounded" onClick={onEdit}>
             <Edit2 className="w-4 h-4 text-blue-600" />
           </button>
-          <button className="p-1 hover:bg-gray-100 rounded" onClick={onDelete}>
-            <Trash2 className="w-4 h-4 text-red-600" />
-          </button>
+
           <button className="p-1 hover:bg-gray-100 rounded" onClick={onClose}>
             <X className="w-4 h-4 text-gray-600" />
           </button>
@@ -59,6 +69,7 @@ const CustomTable = ({
   onDeleteData,
   onDeleteMultiple,
 }) => {
+  console.log(values, "valuesss");
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState({});
   const [editingCell, setEditingCell] = useState(null);
@@ -66,12 +77,104 @@ const CustomTable = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRows, setSelectedRows] = useState(new Set());
 
+  const getEditorType = (header) => {
+    switch (header.key) {
+      case "category":
+        return "dropdown-category";
+      case "dcType":
+        return "dropdown-dcType";
+      case "dcPurchaseUnitMeasure":
+      case "inputQuantityMeasure":
+        return "dropdown-unit";
+      case "dcPurchaseUnit":
+      case "purchaseUnitCost":
+      case "inputQuantityPerUnit":
+      case "totalQuantityMeasure":
+      case "directCostPerUnit":
+      case "laborHoursPerUnit":
+      case "overheadRate":
+      case "unitsProduced":
+        return "number";
+      default:
+        return "text";
+    }
+  };
+
+  const getDropdownOptions = (editorType) => {
+    switch (editorType) {
+      case "dropdown-category":
+        return CATEGORIES;
+      case "dropdown-dcType":
+        return DC_TYPES;
+      case "dropdown-unit":
+        return UNIT_MEASURES;
+      default:
+        return [];
+    }
+  };
+
+  const validateInput = (value, editorType) => {
+    if (editorType === "number") {
+      const numValue = Number(value);
+      return !isNaN(numValue) && numValue >= 0;
+    }
+    return true;
+  };
+
   // Calculate cell value based on formulas
   const calculateCellValue = (row, header) => {
     try {
       if (!row || !header?.key) return "";
 
       switch (header.key) {
+        case "totalLaborHours":
+          return calculateTotalLaborHours(
+            row.unitsProduced,
+            row.laborHoursPerUnit
+          );
+
+        case "overheadAllocated":
+          const totalLaborHours = calculateTotalLaborHours(
+            row.unitsProduced,
+            row.laborHoursPerUnit
+          );
+          return calculateOverheadAllocated(totalLaborHours, row.overheadRate);
+
+        case "totalDirectCosts":
+          return calculateTotalDirectCosts(
+            row.unitsProduced,
+            row.directCostPerUnit
+          );
+
+        case "totalCostPerProduct":
+          const directCosts = calculateTotalDirectCosts(
+            row.unitsProduced,
+            row.directCostPerUnit
+          );
+          const laborHours = calculateTotalLaborHours(
+            row.unitsProduced,
+            row.laborHoursPerUnit
+          );
+          const overhead = calculateOverheadAllocated(
+            laborHours,
+            row.overheadRate
+          );
+          return calculateTotalCostPerProduct(directCosts, overhead);
+
+        case "costPerUnit":
+          const totalCost = calculateTotalCostPerProduct(
+            calculateTotalDirectCosts(row.unitsProduced, row.directCostPerUnit),
+            calculateOverheadAllocated(
+              calculateTotalLaborHours(
+                row.unitsProduced,
+                row.laborHoursPerUnit
+              ),
+              row.overheadRate
+            )
+          );
+          return calculateCostPerUnit(totalCost, row.unitsProduced);
+
+        // Handle other existing calculated fields if any
         case "costPerInputQuantity":
           return calculateCostPerInputQuantity(
             row?.purchaseUnitCost,
@@ -85,6 +188,8 @@ const CustomTable = ({
             row?.inputQuantityPerUnit
           );
           return calculateSubtotalCost(costPerInput, row?.totalQuantityMeasure);
+
+        // Return the raw value for non-calculated fields
         default:
           return row[header.key] ?? "";
       }
@@ -135,23 +240,36 @@ const CustomTable = ({
     setEditValue(String(value ?? ""));
   };
 
-  const handleSaveCell = () => {
+  const handleSaveCell = (value) => {
     try {
       if (!editingCell) return;
 
       const { rowIndex, key } = editingCell;
       const header = headers?.find((h) => h.key === key);
-      const value =
-        header?.type === "number" ? Number(editValue) || 0 : editValue;
+      const editorType = getEditorType(header);
+      let finalValue = value;
+
+      if (editorType === "number") {
+        finalValue = Number(value) || 0;
+      }
+
+      // Log the filtered data and values for debugging
+      console.log("Filtered Data:", filteredData);
+      console.log("Values:", values);
 
       const originalIndex = values?.findIndex(
         (item) => item === filteredData?.[rowIndex]
       );
 
+      // Log the original index for debugging
+      console.log("Original Index:", originalIndex);
+
       if (originalIndex !== -1) {
         onUpdateData?.(originalIndex, {
-          [key]: value,
+          [key]: finalValue,
         });
+      } else {
+        console.error("Original index not found for the row.");
       }
 
       setEditingCell(null);
@@ -176,16 +294,6 @@ const CustomTable = ({
       }
     } catch (error) {
       console.error("Error deleting row:", error);
-    }
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleSaveCell();
-    } else if (e.key === "Escape") {
-      setEditingCell(null);
-      setEditValue("");
     }
   };
 
@@ -263,6 +371,87 @@ const CustomTable = ({
     }
   };
 
+  const CellEditor = ({ header, value, onSave, onCancel }) => {
+    const editorType = getEditorType(header);
+    const [localValue, setLocalValue] = useState(value);
+
+    const handleChange = (e) => {
+      const newValue = e.target.value;
+      if (validateInput(newValue, editorType)) {
+        setLocalValue(newValue);
+      }
+    };
+
+    const handleKeyPress = (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        onSave(localValue);
+      } else if (e.key === "Escape") {
+        onCancel();
+      }
+    };
+
+    if (editorType.startsWith("dropdown")) {
+      const options = getDropdownOptions(editorType);
+      return (
+        <div className="flex items-center gap-2">
+          <select
+            value={localValue}
+            onChange={handleChange}
+            onKeyDown={handleKeyPress}
+            className="w-full p-2 border rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+            autoFocus
+          >
+            {options.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={() => onSave(localValue)}
+            className="p-1 text-green-600 hover:text-green-900"
+          >
+            <Check className="w-4 h-4" />
+          </button>
+          <button
+            onClick={onCancel}
+            className="p-1 text-red-600 hover:text-red-900"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex items-center gap-2">
+        <input
+          type={editorType === "number" ? "number" : "text"}
+          value={localValue}
+          onChange={handleChange}
+          onKeyDown={handleKeyPress}
+          className="w-full p-2 border rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+          autoFocus
+          min={editorType === "number" ? "0" : undefined}
+          step={editorType === "number" ? "any" : undefined}
+        />
+        <button
+          onClick={() => onSave(localValue)}
+          className="p-1 text-green-600 hover:text-green-900"
+        >
+          <Check className="w-4 h-4" />
+        </button>
+        <button
+          onClick={onCancel}
+          className="p-1 text-red-600 hover:text-red-900"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+    );
+  };
+
   const CellContent = ({ rowIndex, header, row }) => {
     const [showTooltip, setShowTooltip] = useState(false);
     const value = calculateCellValue(row, header);
@@ -273,19 +462,32 @@ const CustomTable = ({
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
       >
-        <CustomTooltip
-          isVisible={showTooltip}
-          selectedCount={selectedRows?.size ?? 0}
-          onEdit={() => handleEditCell(rowIndex, header?.key, value)}
-          onDelete={() => handleDeleteRow(rowIndex)}
-          onClose={() => setShowTooltip(false)}
-        >
-          <div className="w-full text-sm text-left">
-            {header?.type === "number"
-              ? formatNumber(value, header.type)
-              : value}
-          </div>
-        </CustomTooltip>
+        {editingCell?.rowIndex === rowIndex &&
+        editingCell?.key === header?.key ? (
+          <CellEditor
+            header={header}
+            value={editValue}
+            onSave={handleSaveCell}
+            onCancel={() => {
+              setEditingCell(null);
+              setEditValue("");
+            }}
+          />
+        ) : (
+          <CustomTooltip
+            isVisible={showTooltip}
+            selectedCount={selectedRows?.size ?? 0}
+            onEdit={() => handleEditCell(rowIndex, header?.key, value)}
+            onDelete={() => handleDeleteRow(rowIndex)}
+            onClose={() => setShowTooltip(false)}
+          >
+            <div className="w-full text-sm text-left">
+              {header?.type === "number"
+                ? formatNumber(value, header.type)
+                : value}
+            </div>
+          </CustomTooltip>
+        )}
       </div>
     );
   };
@@ -341,7 +543,9 @@ const CustomTable = ({
                   className="px-6 text-left py-3 text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
                   <div className="space-y-2 min-w-[150px]">
-                    <div className="text-xs">{header?.label}</div>
+                    <div className="text-xs">
+                      {header?.label ? header?.label : header}
+                    </div>
                   </div>
                 </th>
               ))}
@@ -363,60 +567,27 @@ const CustomTable = ({
                 </td>
                 {headers?.map((header) => (
                   <td key={header?.key} className="px-6 whitespace-nowrap">
-                    {editingCell?.rowIndex === rowIndex &&
-                    editingCell?.key === header?.key ? (
-                      <div className="flex items-center gap-2">
-                        <input
-                          type={header?.type}
-                          value={editValue}
-                          onChange={(e) => setEditValue(e.target.value)}
-                          onKeyDown={handleKeyPress}
-                          className="w-full p-2 border rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                          autoFocus
-                        />
-                        <button
-                          onClick={handleSaveCell}
-                          className="p-1 text-green-600 hover:text-green-900"
-                        >
-                          <Check className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setEditingCell(null);
-                            setEditValue("");
-                          }}
-                          className="p-1 text-red-600 hover:text-red-900"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ) : (
-                      <CellContent
-                        rowIndex={rowIndex}
-                        header={header}
-                        row={row}
-                      />
-                    )}
+                    <>{console.log(header)}</>
+                    <CellContent
+                      rowIndex={rowIndex}
+                      header={header}
+                      row={row}
+                    />
                   </td>
                 ))}
               </tr>
             ))}
-          </tbody>
-          {/* <tfoot>
-            <tr className="divide-x divide-gray-200">
-              <td className="px-6 py-2 text-sm font-semibold">Total</td>
-              {headers?.map((header) => (
+            {paginatedData?.length === 0 && (
+              <tr>
                 <td
-                  key={header?.key}
-                  className="px-6 py-2 text-sm font-semibold"
+                  colSpan={headers?.length + 1}
+                  className="px-6 py-4 text-center text-gray-500"
                 >
-                  {header?.type === "number"
-                    ? formatNumber(calculateTotal(header?.key), "number")
-                    : ""}
+                  No data available
                 </td>
-              ))}
-            </tr>
-          </tfoot> */}
+              </tr>
+            )}
+          </tbody>
         </table>
       </div>
 
@@ -432,7 +603,7 @@ const CustomTable = ({
           <button
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
-            className="rounded-md border enabled:hover:bg-gray-50 disabled:opacity-50"
+            className="p-1 rounded-md border enabled:hover:bg-gray-50 disabled:opacity-50"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -454,7 +625,7 @@ const CustomTable = ({
               setCurrentPage((prev) => Math.min(prev + 1, totalPages))
             }
             disabled={currentPage === totalPages}
-            className="rounded-md border enabled:hover:bg-gray-50 disabled:opacity-50"
+            className="p-1 rounded-md border enabled:hover:bg-gray-50 disabled:opacity-50"
           >
             <ChevronRight className="w-4 h-4" />
           </button>

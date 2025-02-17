@@ -10,9 +10,12 @@ import StepperModal from "../../components/StepperModal";
 import { useDispatch, useSelector } from "react-redux";
 import {
   removeDirectCost,
+  removeIndirectCost,
   removeMultipleDirectCosts,
+  removeMultipleIndirectCosts,
   setCurrentStep,
   updateDirectCost,
+  updateIndirectCost,
 } from "../../store/slices/costCalculatorSlice";
 import AddNewSlotModal from "../../components/AddNewSlotModal";
 import { productInfoSchema } from "../../utils/validations";
@@ -20,10 +23,12 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { updateProductInfo } from "../../store/slices/costCalculatorSlice";
 import { direcCostHeaders } from "../../utils/headers";
+import AddNewIndirectSlotModal from "../../components/AddNewIndirectSlotModal";
 
 const CostPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [showSlotModal, setShowSlotModal] = useState(false);
+  const [showIndirectSlotModal, setShowIndirectSlotModal] = useState(false);
   const [isStepperOpen, setIsStepperOpen] = useState(false);
 
   const [inputValue2, setInputValue2] = useState("");
@@ -35,10 +40,12 @@ const CostPage = () => {
   const allocationMethodReducer = useSelector(
     (state) => state.allocationMethod
   );
-  console.log("allocatiooooooooooooooooooo", allocationMethodReducer);
   const currentAllocationMethod = allocationMethodReducer.selectedMethod;
+  const indirectCostHeaders = allocationMethodReducer.headers;
+  console.log(indirectCostHeaders, "asdddddddddddddddddd");
   const currentStep = costCalculator.currentStep;
   const directCostData = costCalculator.directCosts;
+  const indirectCostsData = costCalculator.indirectCosts;
   console.log("hey", directCostData);
 
   const steps = [
@@ -121,6 +128,7 @@ const CostPage = () => {
     setTab(tab + 1);
   };
 
+  //Direct Costs
   const handleUpdateDirectCostData = (index, data) => {
     dispatch(updateDirectCost({ index, data }));
   };
@@ -133,6 +141,19 @@ const CostPage = () => {
   const handleDeleteDirectCostMultiple = (indexes) => {
     // Implement your multiple delete action
     dispatch(removeMultipleDirectCosts(indexes));
+  };
+
+  //Indirect Costs
+  const handleUpdateIndirectCostData = (index, data) => {
+    dispatch(updateIndirectCost({ index, data }));
+  };
+
+  const handleDeleteIndirectCostData = (index) => {
+    dispatch(removeIndirectCost(index));
+  };
+
+  const handleDeleteIndirectCostMultiple = (indexes) => {
+    dispatch(removeMultipleIndirectCosts(indexes));
   };
 
   return (
@@ -213,11 +234,11 @@ const CostPage = () => {
                     {" "}
                     Product Service Name
                   </div>
-                  <div className="flex col items-center justify-center h-full">
-                    <div className="flex flex-col gap-2 h-full items-center justify-center">
+                  <div className="flex flex-col items-center justify-center h-full">
+                    <div className="flex flex-col gap-6 h-full items-center justify-center">
                       <div className="w-full">
                         <div className="text-[18px] self-start text-start font-semibold leading-[36px]">
-                          Write the type of your product
+                          Write the type of your product group
                         </div>
                         <div className="w-full  flex flex-col items-start justify-start ">
                           <input
@@ -328,289 +349,27 @@ const CostPage = () => {
                 "linear-gradient(180deg, #FFFFFF 0%, #CED2D6 124.35%)",
             }}
           >
-            <div className="flex flex-col w-full gap-6">
+            <div className="flex flex-row w-full justify-between">
               <div className="text-[24px] font-semibold leading-[39px]">
-                Indirect Cost: Step 1 (Input Data)
-              </div>
-              <div className="flex flex-row flex-wrap items-center justify-between">
-                <div className="flex flex-row gap-3">
-                  <div>Total Indirect Costs</div>
-                  <div>
-                    <Input
-                      placeholder={"$ 12,000"}
-                      className={"h-[25px] w-[200px]"}
-                    />
-                  </div>
-                </div>
-                <div className="flex flex-row gap-3">
-                  <div>Cost Driver Selected</div>
-                  <div>
-                    <Input
-                      placeholder={"Direct Labor Hours"}
-                      className={"h-[25px] w-[200px]"}
-                    />
-                  </div>
-                </div>
-                <div className="flex flex-row gap-3">
-                  <div>Total Cost Driver Units</div>
-                  <div>
-                    <Input
-                      placeholder={"4,000"}
-                      className={"h-[25px] w-[200px]"}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-            <CustomTable headerText={"Product Details:"} />
-            <div className="flex flex-row justify-between w-full pt-3">
-              <div>
-                <button
-                  className="border hover:bg-skyBlue border-skyBlue w-[80px] h-[30px] rounded-md text-sm font-semibold text-center"
-                  onClick={handlePrevClick}
-                >
-                  Back
-                </button>
+                Indirect Cost{" "}
               </div>
               <div>
                 <button
-                  className="border hover:bg-skyBlue bg-darkBlue text-white border-skyBlue w-[80px] h-[30px] rounded-md text-sm font-semibold text-center"
-                  onClick={handleNextClick}
+                  className="border hover:bg-skyBlue hover:text-white border-skyBlue w-max px-3 h-[30px] rounded-md text-sm font-semibold text-center"
+                  onClick={() => [setShowIndirectSlotModal(true)]}
                 >
-                  Next
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : tab === 4 ? (
-          <div
-            className="w-full border border-skyBlue rounded-[20px] min-h-[515px] h-max relative top-[30px] p-5"
-            style={{
-              background:
-                "linear-gradient(180deg, #FFFFFF 0%, #CED2D6 124.35%)",
-            }}
-          >
-            <div className="flex flex-col w-full gap-6">
-              <div className="text-[24px] font-semibold leading-[39px]">
-                Indirect Cost: Step 2 (Calculations)
-              </div>
-              <div className="flex flex-row flex-wrap gap-4 items-center">
-                <div className="flex flex-row gap-3">
-                  <div>Predetermined Overhead Rate</div>
-                  <div>
-                    <Input
-                      placeholder={"$ 12,000"}
-                      className={"h-[25px] w-[200px]"}
-                    />
-                  </div>
-                </div>
-                <div className="flex flex-row gap-3">
-                  <div>Result</div>
-                  <div>
-                    <Input
-                      placeholder={"Direct Labor Hours"}
-                      className={"h-[25px] w-[200px]"}
-                    />
-                  </div>
-                </div>
+                  Add new indirect cost
+                </button>{" "}
               </div>
             </div>
             <CustomTable
-              handleNextButton={handleNextClick}
-              handleBackButton={handlePrevClick}
-              headerText={"Total Labor Hours Per Product:"}
+              headerText={"Product Details:"}
+              values={indirectCostsData}
+              headers={Array.from(indirectCostHeaders)}
+              onUpdateData={handleUpdateIndirectCostData}
+              onDeleteData={handleDeleteIndirectCostData}
+              onDeleteMultiple={handleDeleteIndirectCostMultiple}
             />
-            <div className="flex flex-row justify-between w-full pt-3">
-              <div>
-                <button
-                  className="border hover:bg-skyBlue border-skyBlue w-[80px] h-[30px] rounded-md text-sm font-semibold text-center"
-                  onClick={handlePrevClick}
-                >
-                  Back
-                </button>
-              </div>
-              <div>
-                <button
-                  className="border hover:bg-skyBlue bg-darkBlue text-white border-skyBlue w-[80px] h-[30px] rounded-md text-sm font-semibold text-center"
-                  onClick={handleNextClick}
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : tab === 5 ? (
-          <div
-            className="w-full border border-skyBlue rounded-[20px] min-h-[515px] h-max relative top-[30px] p-5"
-            style={{
-              background:
-                "linear-gradient(180deg, #FFFFFF 0%, #CED2D6 124.35%)",
-            }}
-          >
-            <div className="flex flex-col w-full gap-6">
-              <div className="text-[24px] font-semibold leading-[39px]">
-                Indirect Cost: Step 3 (Calculations)
-              </div>
-            </div>
-            <CustomTable
-              handleNextButton={handleNextClick}
-              handleBackButton={handlePrevClick}
-              headerText={"Overhead Allocated Per Product:"}
-            />
-            <div className="flex flex-row justify-between w-full pt-3">
-              <div>
-                <button
-                  className="border hover:bg-skyBlue border-skyBlue w-[80px] h-[30px] rounded-md text-sm font-semibold text-center"
-                  onClick={handlePrevClick}
-                >
-                  Back
-                </button>
-              </div>
-              <div>
-                <button
-                  className="border hover:bg-skyBlue bg-darkBlue text-white border-skyBlue w-[80px] h-[30px] rounded-md text-sm font-semibold text-center"
-                  onClick={handleNextClick}
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : tab === 6 ? (
-          <div
-            className="w-full border border-skyBlue rounded-[20px] min-h-[515px] h-max relative top-[30px] p-5"
-            style={{
-              background:
-                "linear-gradient(180deg, #FFFFFF 0%, #CED2D6 124.35%)",
-            }}
-          >
-            <div className="flex flex-col w-full gap-6">
-              <div className="text-[24px] font-semibold leading-[39px]">
-                Indirect Cost: Step 4 (Calculations)
-              </div>
-            </div>
-            <CustomTable
-              handleNextButton={handleNextClick}
-              handleBackButton={handlePrevClick}
-              headerText={"Total Direct Costs per Product:"}
-            />
-            <div className="flex flex-row justify-between w-full pt-3">
-              <div>
-                <button
-                  className="border hover:bg-skyBlue border-skyBlue w-[80px] h-[30px] rounded-md text-sm font-semibold text-center"
-                  onClick={handlePrevClick}
-                >
-                  Back
-                </button>
-              </div>
-              <div>
-                <button
-                  className="border hover:bg-skyBlue bg-darkBlue text-white border-skyBlue w-[80px] h-[30px] rounded-md text-sm font-semibold text-center"
-                  onClick={handleNextClick}
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : tab === 7 ? (
-          <div
-            className="w-full border border-skyBlue rounded-[20px] min-h-[515px] h-max relative top-[30px] p-5"
-            style={{
-              background:
-                "linear-gradient(180deg, #FFFFFF 0%, #CED2D6 124.35%)",
-            }}
-          >
-            <div className="flex flex-col w-full gap-6">
-              <div className="text-[24px] font-semibold leading-[39px]">
-                Indirect Cost: Step 5 (Calculations)
-              </div>
-            </div>
-            <CustomTable
-              handleNextButton={handleNextClick}
-              handleBackButton={handlePrevClick}
-              headerText={"Total Costs per Product:"}
-            />
-            <div className="flex flex-row justify-between w-full pt-3">
-              <div>
-                <button
-                  className="border hover:bg-skyBlue border-skyBlue w-[80px] h-[30px] rounded-md text-sm font-semibold text-center"
-                  onClick={handlePrevClick}
-                >
-                  Back
-                </button>
-              </div>
-              <div>
-                <button
-                  className="border hover:bg-skyBlue bg-darkBlue text-white border-skyBlue w-[80px] h-[30px] rounded-md text-sm font-semibold text-center"
-                  onClick={handleNextClick}
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : tab === 8 ? (
-          <div
-            className="w-full border border-skyBlue rounded-[20px] min-h-[515px] h-max relative top-[30px] p-5"
-            style={{
-              background:
-                "linear-gradient(180deg, #FFFFFF 0%, #CED2D6 124.35%)",
-            }}
-          >
-            <div className="flex flex-col w-full gap-6">
-              <div className="text-[24px] font-semibold leading-[39px]">
-                Indirect Cost: Step 6 (Calculations)
-              </div>
-            </div>
-            <CustomTable headerText={"Cost per Unit of Product:"} />
-            <div className="flex flex-row justify-between w-full pt-3">
-              <div>
-                <button
-                  className="border hover:bg-skyBlue border-skyBlue w-[80px] h-[30px] rounded-md text-sm font-semibold text-center"
-                  onClick={handlePrevClick}
-                >
-                  Back
-                </button>
-              </div>
-              <div>
-                <button
-                  className="border hover:bg-skyBlue bg-darkBlue text-white border-skyBlue w-[80px] h-[30px] rounded-md text-sm font-semibold text-center"
-                  onClick={handleNextClick}
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : tab === 9 ? (
-          <div
-            className="w-full border border-skyBlue rounded-[20px] min-h-[515px] h-max relative top-[30px] p-5"
-            style={{
-              background:
-                "linear-gradient(180deg, #FFFFFF 0%, #CED2D6 124.35%)",
-            }}
-          >
-            <div className="flex flex-row justify-between w-full gap-6">
-              <div className="text-[24px] font-semibold leading-[39px]">
-                All Costs
-              </div>
-              <div className="flex flex-row gap-3">
-                <div
-                  className="text-sm border px-3 py-1 text-center h-[30px] flex items-center justify-center cursor-pointer hover:bg-slate-400 hover:text-white rounded-md border-skyBlue"
-                  onClick={() => setShowModal(true)}
-                >
-                  Direct Cost
-                </div>
-                <div
-                  className="text-sm border px-3 py-1 text-center h-[30px] flex items-center justify-center cursor-pointer hover:bg-slate-400 hover:text-white rounded-md border-skyBlue"
-                  onClick={() => setShowModal(true)}
-                >
-                  Indirect Cost
-                </div>
-              </div>
-            </div>
-            <CustomTable />
             <div className="flex flex-row justify-between w-full pt-3">
               <div>
                 <button
@@ -631,6 +390,256 @@ const CostPage = () => {
             </div>
           </div>
         ) : (
+          // ) : tab === 4 ? (
+          //   <div
+          //     className="w-full border border-skyBlue rounded-[20px] min-h-[515px] h-max relative top-[30px] p-5"
+          //     style={{
+          //       background:
+          //         "linear-gradient(180deg, #FFFFFF 0%, #CED2D6 124.35%)",
+          //     }}
+          //   >
+          //     <div className="flex flex-col w-full gap-6">
+          //       <div className="text-[24px] font-semibold leading-[39px]">
+          //         Indirect Cost: Step 2 (Calculations)
+          //       </div>
+          //       <div className="flex flex-row flex-wrap gap-4 items-center">
+          //         <div className="flex flex-row gap-3">
+          //           <div>Predetermined Overhead Rate</div>
+          //           <div>
+          //             <Input
+          //               placeholder={"$ 12,000"}
+          //               className={"h-[25px] w-[200px]"}
+          //             />
+          //           </div>
+          //         </div>
+          //         <div className="flex flex-row gap-3">
+          //           <div>Result</div>
+          //           <div>
+          //             <Input
+          //               placeholder={"Direct Labor Hours"}
+          //               className={"h-[25px] w-[200px]"}
+          //             />
+          //           </div>
+          //         </div>
+          //       </div>
+          //     </div>
+          //     <CustomTable
+          //       handleNextButton={handleNextClick}
+          //       handleBackButton={handlePrevClick}
+          //       headerText={"Total Labor Hours Per Product:"}
+          //     />
+          //     <div className="flex flex-row justify-between w-full pt-3">
+          //       <div>
+          //         <button
+          //           className="border hover:bg-skyBlue border-skyBlue w-[80px] h-[30px] rounded-md text-sm font-semibold text-center"
+          //           onClick={handlePrevClick}
+          //         >
+          //           Back
+          //         </button>
+          //       </div>
+          //       <div>
+          //         <button
+          //           className="border hover:bg-skyBlue bg-darkBlue text-white border-skyBlue w-[80px] h-[30px] rounded-md text-sm font-semibold text-center"
+          //           onClick={handleNextClick}
+          //         >
+          //           Next
+          //         </button>
+          //       </div>
+          //     </div>
+          //   </div>
+          // ) : tab === 5 ? (
+          //   <div
+          //     className="w-full border border-skyBlue rounded-[20px] min-h-[515px] h-max relative top-[30px] p-5"
+          //     style={{
+          //       background:
+          //         "linear-gradient(180deg, #FFFFFF 0%, #CED2D6 124.35%)",
+          //     }}
+          //   >
+          //     <div className="flex flex-col w-full gap-6">
+          //       <div className="text-[24px] font-semibold leading-[39px]">
+          //         Indirect Cost: Step 3 (Calculations)
+          //       </div>
+          //     </div>
+          //     <CustomTable
+          //       handleNextButton={handleNextClick}
+          //       handleBackButton={handlePrevClick}
+          //       headerText={"Overhead Allocated Per Product:"}
+          //     />
+          //     <div className="flex flex-row justify-between w-full pt-3">
+          //       <div>
+          //         <button
+          //           className="border hover:bg-skyBlue border-skyBlue w-[80px] h-[30px] rounded-md text-sm font-semibold text-center"
+          //           onClick={handlePrevClick}
+          //         >
+          //           Back
+          //         </button>
+          //       </div>
+          //       <div>
+          //         <button
+          //           className="border hover:bg-skyBlue bg-darkBlue text-white border-skyBlue w-[80px] h-[30px] rounded-md text-sm font-semibold text-center"
+          //           onClick={handleNextClick}
+          //         >
+          //           Next
+          //         </button>
+          //       </div>
+          //     </div>
+          //   </div>
+          // ) : tab === 6 ? (
+          //   <div
+          //     className="w-full border border-skyBlue rounded-[20px] min-h-[515px] h-max relative top-[30px] p-5"
+          //     style={{
+          //       background:
+          //         "linear-gradient(180deg, #FFFFFF 0%, #CED2D6 124.35%)",
+          //     }}
+          //   >
+          //     <div className="flex flex-col w-full gap-6">
+          //       <div className="text-[24px] font-semibold leading-[39px]">
+          //         Indirect Cost: Step 4 (Calculations)
+          //       </div>
+          //     </div>
+          //     <CustomTable
+          //       handleNextButton={handleNextClick}
+          //       handleBackButton={handlePrevClick}
+          //       headerText={"Total Direct Costs per Product:"}
+          //     />
+          //     <div className="flex flex-row justify-between w-full pt-3">
+          //       <div>
+          //         <button
+          //           className="border hover:bg-skyBlue border-skyBlue w-[80px] h-[30px] rounded-md text-sm font-semibold text-center"
+          //           onClick={handlePrevClick}
+          //         >
+          //           Back
+          //         </button>
+          //       </div>
+          //       <div>
+          //         <button
+          //           className="border hover:bg-skyBlue bg-darkBlue text-white border-skyBlue w-[80px] h-[30px] rounded-md text-sm font-semibold text-center"
+          //           onClick={handleNextClick}
+          //         >
+          //           Next
+          //         </button>
+          //       </div>
+          //     </div>
+          //   </div>
+          // ) : tab === 7 ? (
+          //   <div
+          //     className="w-full border border-skyBlue rounded-[20px] min-h-[515px] h-max relative top-[30px] p-5"
+          //     style={{
+          //       background:
+          //         "linear-gradient(180deg, #FFFFFF 0%, #CED2D6 124.35%)",
+          //     }}
+          //   >
+          //     <div className="flex flex-col w-full gap-6">
+          //       <div className="text-[24px] font-semibold leading-[39px]">
+          //         Indirect Cost: Step 5 (Calculations)
+          //       </div>
+          //     </div>
+          //     <CustomTable
+          //       handleNextButton={handleNextClick}
+          //       handleBackButton={handlePrevClick}
+          //       headerText={"Total Costs per Product:"}
+          //     />
+          //     <div className="flex flex-row justify-between w-full pt-3">
+          //       <div>
+          //         <button
+          //           className="border hover:bg-skyBlue border-skyBlue w-[80px] h-[30px] rounded-md text-sm font-semibold text-center"
+          //           onClick={handlePrevClick}
+          //         >
+          //           Back
+          //         </button>
+          //       </div>
+          //       <div>
+          //         <button
+          //           className="border hover:bg-skyBlue bg-darkBlue text-white border-skyBlue w-[80px] h-[30px] rounded-md text-sm font-semibold text-center"
+          //           onClick={handleNextClick}
+          //         >
+          //           Next
+          //         </button>
+          //       </div>
+          //     </div>
+          //   </div>
+          // ) : tab === 8 ? (
+          //   <div
+          //     className="w-full border border-skyBlue rounded-[20px] min-h-[515px] h-max relative top-[30px] p-5"
+          //     style={{
+          //       background:
+          //         "linear-gradient(180deg, #FFFFFF 0%, #CED2D6 124.35%)",
+          //     }}
+          //   >
+          //     <div className="flex flex-col w-full gap-6">
+          //       <div className="text-[24px] font-semibold leading-[39px]">
+          //         Indirect Cost: Step 6 (Calculations)
+          //       </div>
+          //     </div>
+          //     <CustomTable headerText={"Cost per Unit of Product:"} />
+          //     <div className="flex flex-row justify-between w-full pt-3">
+          //       <div>
+          //         <button
+          //           className="border hover:bg-skyBlue border-skyBlue w-[80px] h-[30px] rounded-md text-sm font-semibold text-center"
+          //           onClick={handlePrevClick}
+          //         >
+          //           Back
+          //         </button>
+          //       </div>
+          //       <div>
+          //         <button
+          //           className="border hover:bg-skyBlue bg-darkBlue text-white border-skyBlue w-[80px] h-[30px] rounded-md text-sm font-semibold text-center"
+          //           onClick={handleNextClick}
+          //         >
+          //           Next
+          //         </button>
+          //       </div>
+          //     </div>
+          //   </div>
+          // ) : tab === 9 ? (
+          //   <div
+          //     className="w-full border border-skyBlue rounded-[20px] min-h-[515px] h-max relative top-[30px] p-5"
+          //     style={{
+          //       background:
+          //         "linear-gradient(180deg, #FFFFFF 0%, #CED2D6 124.35%)",
+          //     }}
+          //   >
+          //     <div className="flex flex-row justify-between w-full gap-6">
+          //       <div className="text-[24px] font-semibold leading-[39px]">
+          //         All Costs
+          //       </div>
+          //       <div className="flex flex-row gap-3">
+          //         <div
+          //           className="text-sm border px-3 py-1 text-center h-[30px] flex items-center justify-center cursor-pointer hover:bg-slate-400 hover:text-white rounded-md border-skyBlue"
+          //           onClick={() => setShowModal(true)}
+          //         >
+          //           Direct Cost
+          //         </div>
+          //         <div
+          //           className="text-sm border px-3 py-1 text-center h-[30px] flex items-center justify-center cursor-pointer hover:bg-slate-400 hover:text-white rounded-md border-skyBlue"
+          //           onClick={() => setShowModal(true)}
+          //         >
+          //           Indirect Cost
+          //         </div>
+          //       </div>
+          //     </div>
+          //     <CustomTable />
+          //     <div className="flex flex-row justify-between w-full pt-3">
+          //       <div>
+          //         <button
+          //           className="border hover:bg-skyBlue border-skyBlue w-[80px] h-[30px] rounded-md text-sm font-semibold text-center"
+          //           onClick={handlePrevClick}
+          //         >
+          //           Back
+          //         </button>
+          //       </div>
+          //       <div>
+          //         <button
+          //           className="border hover:bg-skyBlue bg-darkBlue text-white border-skyBlue w-[80px] h-[30px] rounded-md text-sm font-semibold text-center"
+          //           onClick={() => navigate("/dashboard")}
+          //         >
+          //           Result
+          //         </button>
+          //       </div>
+          //     </div>
+          //   </div>
+          // )
+
           ""
         )}
         <div className="fixed z-50">
@@ -666,6 +675,11 @@ const CostPage = () => {
         </div>
         {showSlotModal && (
           <AddNewSlotModal setShowSlotModal={setShowSlotModal} />
+        )}
+        {showIndirectSlotModal && (
+          <AddNewIndirectSlotModal
+            setShowSlotModal={setShowIndirectSlotModal}
+          />
         )}
       </div>
     </>

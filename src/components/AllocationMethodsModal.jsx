@@ -1,15 +1,24 @@
 import React, { useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setAllocationMethod } from "../store/slices/allocationMethodSlice";
+import { setCurrentStep } from "../store/slices/costCalculatorSlice";
 
 const AllocationModal = ({ setShowModal }) => {
-  const [selectedMethod, setSelectedMethod] = useState({
-    id: "1",
-    label: "Traditional (Single) Overhead Rates",
-    optional: false,
-  });
+  const allocationMethodReducer = useSelector(
+    (state) => state.allocationMethod
+  );
+  const selectedMethodDetails = allocationMethodReducer.selectedMethodDetail;
+  const [selectedMethod, setSelectedMethod] = useState(
+    selectedMethodDetails
+      ? selectedMethodDetails
+      : {
+          id: "1",
+          label: "Traditional (Single) Overhead Rates",
+          optional: false,
+        }
+  );
+
   const dispatch = useDispatch();
-  console.log(selectedMethod);
 
   const methods = [
     { id: "1", label: "Traditional (Single) Overhead Rates", optional: false },
@@ -91,8 +100,7 @@ const AllocationModal = ({ setShowModal }) => {
             <button
               className="w-24 px-4 py-2 bg-slate-600 text-white rounded-md hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-200"
               onClick={() => {
-                console.log("Selected methods:", selectedMethod); // Debugging
-                dispatch(setAllocationMethod(selectedMethod)); // Update Redux state
+                dispatch(setAllocationMethod(selectedMethod));
                 setShowModal(false);
               }}
             >

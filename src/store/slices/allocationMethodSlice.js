@@ -3,10 +3,16 @@ import { createSlice } from "@reduxjs/toolkit";
 // Define headers for each allocation method
 const allocationHeaders = {
   traditionalOverheadRates: [
-    "Name",
-    "Unit Produced",
-    "Labour Hours Per Unit",
-    "Direct Cost Per Unit",
+    { key: "productName", label: "Product Name" },
+    { key: "unitsProduced", label: "Units Produced" },
+    { key: "laborHoursPerUnit", label: "Labour Hours Per Unit" },
+    { key: "directCostPerUnit", label: "Direct Cost Per Unit" },
+    { key: "overheadRate", label: "Overhead Rate" },
+    { key: "totalLaborHours", label: "Total Labor Hours" },
+    { key: "overheadAllocated", label: "Overhead Allocated" },
+    { key: "totalDirectCosts", label: "Total Direct Costs" },
+    { key: "totalCostPerProduct", label: "Total Cost per Product" },
+    { key: "costPerUnit", label: "Cost per Unit" },
   ],
   directLabor: [
     "Cost Pool",
@@ -22,7 +28,14 @@ const allocationHeaders = {
   ],
 };
 
+const headerMapping = {
+  0: "traditionalOverheadRates",
+  1: "directLabor",
+  2: "machineHours",
+};
+
 const initialState = {
+  selectedMethodDetail: {},
   selectedMethod: "",
   headers: [],
   allocationRates: {},
@@ -33,10 +46,11 @@ const allocationMethodSlice = createSlice({
   initialState,
   reducers: {
     setAllocationMethod: (state, action) => {
-      console.log("reducerrrrrrrrrr", action.payload);
-      let { label } = action.payload;
+      let { id, label } = action.payload;
+      state.selectedMethodDetail = action.payload;
       state.selectedMethod = label;
-      // state.headers = Object.entries(allocationHeaders)[Number(id) - 1] || [];
+      let key = id ? headerMapping[Number(id) - 1] : [];
+      state.headers = allocationHeaders[key];
     },
     updateAllocationRates: (state, action) => {
       state.allocationRates = { ...state.allocationRates, ...action.payload };

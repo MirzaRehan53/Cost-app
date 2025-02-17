@@ -10,8 +10,6 @@ const initialState = {
   },
   directCosts: [
     {
-      // subtotalCost: 123,
-      // costPerInputQuantity: 123,
       dcPurchaseUnit: 1,
       inputQuantityPerUnit: 1000,
       dcPurchaseUnitMeasure: "Pieces",
@@ -25,13 +23,19 @@ const initialState = {
     },
   ],
   selectedAllocationMethod: null,
-  indirectCosts: {
-    costs: [],
-    laborHours: {},
-    overheadAllocated: {},
-    totalDirectCosts: {},
-    costPerUnit: {},
-  },
+  indirectCosts: [
+    {
+      overheadRate: 231,
+      directCostPerUnit: 23,
+      laborHoursPerUnit: 123,
+      unitsProduced: 12,
+      productName: "asd",
+      totalCostDriverUnits: 22,
+      costDriver: 12,
+      totalIndirectCosts: 231,
+      id: "t5ih18qv",
+    },
+  ],
   allCosts: [],
   progress: {
     lastSavedStep: 1,
@@ -86,12 +90,28 @@ const costCalculatorSlice = createSlice({
         (_, index) => !indexesToRemove.includes(index)
       );
     },
+    addIndirectCost: (state, action) => {
+      state.indirectCosts.push(action.payload);
+    },
+    updateIndirectCost: (state, action) => {
+      const { index, data } = action.payload;
+      state.indirectCosts[index] = { ...state.indirectCosts[index], ...data };
+    },
+    removeIndirectCost: (state, action) => {
+      state.indirectCosts = state.indirectCosts.filter(
+        (_, index) => index !== action.payload
+      );
+    },
+    removeMultipleIndirectCosts: (state, action) => {
+      const indexesToRemove = action.payload;
+      state.indirectCosts = state.indirectCosts.filter(
+        (_, index) => !indexesToRemove.includes(index)
+      );
+    },
+
     // setAllocationMethod: (state, action) => {
     //   state.selectedAllocationMethod = action.payload;
     // },
-    updateIndirectCosts: (state, action) => {
-      state.indirectCosts = { ...state.indirectCosts, ...action.payload };
-    },
   },
   extraReducers: (builder) => {
     builder
@@ -113,9 +133,12 @@ export const {
   addDirectCost,
   updateDirectCost,
   removeDirectCost,
+  addIndirectCost,
+  removeIndirectCost,
+  removeMultipleIndirectCosts,
   removeMultipleDirectCosts,
   // setAllocationMethod,
-  updateIndirectCosts,
+  updateIndirectCost,
 } = costCalculatorSlice.actions;
 
 export default costCalculatorSlice.reducer;
