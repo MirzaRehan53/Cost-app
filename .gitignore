@@ -22,3 +22,14 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 env
+
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ESLint files (if you want to ignore them)
+.eslintignore
+.eslintrc.json
+eslint.config.mjs
